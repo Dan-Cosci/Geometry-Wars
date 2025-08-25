@@ -53,6 +53,7 @@ void Game::s_render()
     for (auto &e : this->m_entities.getEntities())
     {
         e->shape->shape.setPosition(e->transform->pos);
+        e->shape->shape.setRotation(e->transform->angle);
         this->window.draw(e->shape->shape);
     }
 }
@@ -107,11 +108,12 @@ void Game::s_update()
 {
     this->window.display();
     this->window.setFramerateLimit(60);
+    this->m_player->transform->angle + 1 % 360;
 }
 
 void Game::s_lifespan()
 {
-    for (auto &e : this->m_entities.getEntities("player"))
+    for (auto &p : this->m_entities.getEntities("player"))
     {
         for (auto &e : this->m_entities.getEntities("enemy"))
         {
