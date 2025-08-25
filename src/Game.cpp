@@ -15,7 +15,8 @@ void Game::init()
         1.4f);
     this->m_player->transform = std::make_shared<c_transform>(
         sf::Vector2f(this->window.getSize().x / 2, this->window.getSize().y / 2),
-        sf::Vector2f(5, 5));
+        sf::Vector2f(5, 5),
+        0.0f);
     this->m_player->input = std::make_shared<c_input>();
     this->m_player->collision = std::make_shared<c_collision>(this->m_player->shape->shape.getRadius());
 }
@@ -28,7 +29,22 @@ void Game::polEv()
         {
             this->window.close();
         }
+        s_userinput();
     }
+}
+
+void Game::m_movement()
+{
+    auto &i = this->m_player->input;
+    auto &t = this->m_player->transform;
+    if (i->up)
+        t->pos.y -= t->vel.y;
+    if (i->down)
+        t->pos.y += t->vel.y;
+    if (i->right)
+        t->pos.x += t->vel.x;
+    if (i->left)
+        t->pos.x -= t->vel.x;
 }
 
 void Game::s_render()
@@ -129,6 +145,7 @@ void Game::Run()
         s_collision();
         s_enemyspawner();
         s_userinput();
+        m_movement();
 
         // rendering and animations
         s_render();

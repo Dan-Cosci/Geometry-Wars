@@ -30,6 +30,7 @@ private:
     // initial function
     void init();
     void polEv();
+    void m_movement();
 
     // Systems
     void s_render();

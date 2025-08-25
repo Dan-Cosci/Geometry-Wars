@@ -6,8 +6,9 @@ class c_transform
 public:
     sf::Vector2f vel = {0.0f, 0.0f};
     sf::Vector2f pos = {0.0f, 0.0f};
-    c_transform(const sf::Vector2f &p, const sf::Vector2f &v)
-        : vel(v), pos(p) {}
+    float angle = 0;
+    c_transform(const sf::Vector2f &p, const sf::Vector2f &v, float a)
+        : vel(v), pos(p), angle(a) {}
 };
 
 class c_shape
