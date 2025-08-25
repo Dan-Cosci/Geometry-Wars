@@ -3,13 +3,32 @@
 
 void Game::init()
 {
-    this->window.create(sf::VideoMode(1280, 720), "Geometry Wars");
+    // reads config file
+    std::ifstream file("src/game.config");
+    if (!file.is_open())
+    {
+        std::cerr << "File not found!\n";
+        return;
+    }
+    std::string r;
+    file >> r >> this->m_windowConfig.W >> this->m_windowConfig.H >> this->m_windowConfig.FPS >> this->m_windowConfig.SCR;
+    std::cout << "loaded " + r + " config\n";
+    file >> r >> this->m_fontConfig.FS >> this->m_fontConfig.S >> this->m_fontConfig.R >> this->m_fontConfig.G >> this->m_fontConfig.B;
+    std::cout << "loaded " + r + " config\n";
+    file >> r >> this->m_playerConfig.SR >> this->m_playerConfig.CR >> this->m_playerConfig.S >> this->m_playerConfig.FR >> this->m_playerConfig.FG >> this->m_playerConfig.FB >> this->m_playerConfig.OR >> this->m_playerConfig.OG >> this->m_playerConfig.OB >> this->m_playerConfig.OT >> this->m_playerConfig.V;
+    std::cout << "loaded " + r + " config\n";
+    file >> r >> this->m_enemyConfig.SR >> this->m_enemyConfig.CR >> this->m_enemyConfig.SMIN >> this->m_enemyConfig.SMAX >> this->m_enemyConfig.OR >> this->m_enemyConfig.OG >> this->m_enemyConfig.OB >> this->m_enemyConfig.OT >> this->m_enemyConfig.VMIN >> this->m_enemyConfig.VMAX >> this->m_enemyConfig.L >> this->m_enemyConfig.SI;
+    std::cout << "loaded " + r + " config\n";
+    file >> r >> this->m_bulletConfig.SR >> this->m_bulletConfig.CR >> this->m_bulletConfig.S >> this->m_bulletConfig.FR >> this->m_bulletConfig.FG >> this->m_bulletConfig.FB >> this->m_bulletConfig.OR >> this->m_bulletConfig.OG >> this->m_bulletConfig.OB >> this->m_bulletConfig.OT >> this->m_bulletConfig.V >> this->m_bulletConfig.L;
+    std::cout << "loaded " + r + " config\n";
+
+    this->window.create(sf::VideoMode(this->m_windowConfig.W, this->m_windowConfig.H), "Geometry Wars");
 
     // initializes player variables
     this->m_player = this->m_entities.addEntity("player");
     this->m_player->shape = std::make_shared<c_shape>(
         50.0f,
-        8,
+        10,
         sf::Color::Black,
         sf::Color::Red,
         1.4f);
@@ -60,10 +79,8 @@ void Game::s_render()
 
 void Game::s_enemyspawner()
 {
-    if (currentFrame == 60)
+    if (currentFrame == 120)
     {
-        std::cout << this->lastEnemySpawned++ << std::endl;
-
         currentFrame = 0;
         auto e = this->m_entities.addEntity("enemy");
         e->transform = std::make_shared<c_transform>(sf::Vector2f(200, 200), sf::Vector2f(5, 5), 0);
@@ -127,7 +144,7 @@ void Game::s_update()
         t->pos.x += t->vel.x;
         t->pos.y += t->vel.y;
     }
-    this->m_player->transform->angle = (int)(this->m_player->transform->angle + 3) % 360;
+    this->m_player->transform->angle = (int)(this->m_player->transform->angle + 4) % 360;
     currentFrame++;
 }
 

@@ -1,6 +1,8 @@
 #pragma once
 #include <iostream>
 #include <random>
+#include <cmath>
+#include <fstream>
 
 #include <SFML/Audio.hpp>
 #include <SFML/Graphics.hpp>
@@ -11,12 +13,40 @@
 #include "EntityManager.hpp"
 #include "Entity.hpp"
 
+// config data holder
+struct WindowConfig
+{
+    int W, H, FPS, SCR;
+};
+struct FontConfig
+{
+    std::string FS;
+    int S, R, G, B;
+};
+struct PlayerConfig
+{
+    int SR, CR, FR, FG, FB, OR, OG, OB, OT, V;
+    float S;
+};
+struct EnemyConfig
+{
+    int SR, CR, OR, OG, OB, OT, VMIN, VMAX, L, SI;
+    float SMIN, SMAX;
+};
+struct BulletConfig
+{
+    int SR, CR, FR, FG, FB, OR, OG, OB, OT, V, L;
+    float S;
+};
+
 class Game
 {
 private:
     // init window factors
     sf::RenderWindow window;
     sf::Event ev;
+    sf::Font m_font;
+    sf::Text m_text;
 
     // game variables
     std::shared_ptr<Entity> m_player;
@@ -26,11 +56,21 @@ private:
     int lastEnemySpawned = 0;
     int currentFrame = 0;
     bool running = true;
+    WindowConfig m_windowConfig;
+    FontConfig m_fontConfig;
+    PlayerConfig m_playerConfig;
+    EnemyConfig m_enemyConfig;
+    BulletConfig m_bulletConfig;
 
     // initial function
     void init();
     void polEv();
     void m_movement();
+
+    // Logics
+    void spawnEnemy();
+    void spawnPlayer();
+    void spawnBullet(std::shared_ptr<Entity> e, const sf::Vector2f &target);
 
     // Systems
     void s_render();

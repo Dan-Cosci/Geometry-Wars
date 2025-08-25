@@ -1,0 +1,40 @@
+WINDOW W H FPS SCR
+int         W       width 
+int         H       height
+int         FPS     frames per second
+int         SCR     window state(full screen or not)
+
+FONT FS S R G B
+std::string         FS      font file
+int                 S       font size
+int                 R,G,B   font color
+
+Player SR CR S FR FG FB OR OG OB OT V
+SR              shape radius        int
+CR              collision radius    int
+S               speed               float
+FR, FG, FB      fill color          int,int,int
+OR, OG, OB      outline color       int,int,int
+OT              outline thickness   int
+V               no. of vertices     int
+
+Enemy SR, CR, SMIN, SMAX, OR, OG, OB, OT, VMIN, VMAX, L, SI 
+SR              shape radius        int
+CR              collision radius    int
+SMIN-SMAX       speed               float,float
+OR, OG, OB      outline color       int,int,int
+OT              outline thickness   int
+VMIN-VMAX       no. of vertices     int,int
+L               lifespan            int
+SI              spawn interval      int
+
+
+Bullet SR CR S FR FG FB OR OG OB OT V L
+SR              shape radius        int
+CR              collision radius    int
+S               speed               float
+FR, FG, FB      fill color          int,int,int
+OR, OG, OB      outline color       int,int,int
+OT              outline thickness   int
+V               no. of vertices     int
+L               lifespan            int
