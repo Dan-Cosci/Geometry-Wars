@@ -60,6 +60,16 @@ void Game::s_render()
 
 void Game::s_enemyspawner()
 {
+    if (currentFrame == 60)
+    {
+        std::cout << this->lastEnemySpawned++ << std::endl;
+
+        currentFrame = 0;
+        auto e = this->m_entities.addEntity("enemy");
+        e->transform = std::make_shared<c_transform>(sf::Vector2f(200, 200), sf::Vector2f(5, 5), 0);
+        e->shape = std::make_shared<c_shape>(30, 5, sf::Color::Blue, sf::Color::White, 2);
+        e->collision = std::make_shared<c_collision>(e->shape->shape.getRadius());
+    }
 }
 
 void Game::s_userinput()
@@ -108,21 +118,44 @@ void Game::s_update()
 {
     this->window.display();
     this->window.setFramerateLimit(60);
-    this->m_player->transform->angle + 1 % 360;
+
+    // player rotation
+
+    for (auto &e : this->m_entities.getEntities("enemy"))
+    {
+        auto &t = e->transform;
+        t->pos.x += t->vel.x;
+        t->pos.y += t->vel.y;
+    }
+    this->m_player->transform->angle = (int)(this->m_player->transform->angle + 3) % 360;
+    currentFrame++;
 }
 
 void Game::s_lifespan()
 {
-    for (auto &p : this->m_entities.getEntities("player"))
-    {
-        for (auto &e : this->m_entities.getEntities("enemy"))
-        {
-        }
-    }
 }
 
 void Game::s_collision()
 {
+    for (auto &e : this->m_entities.getEntities("enemy"))
+    {
+        if (e->transform->pos.x > this->window.getSize().x || e->transform->pos.x < 0)
+        {
+            e->transform->vel.x = -e->transform->vel.x;
+        }
+        if (e->transform->pos.y > this->window.getSize().y || e->transform->pos.y < 0)
+        {
+            e->transform->vel.y = -e->transform->vel.y;
+        }
+
+        // check for player collision
+        int collision = (int)(e->collision->radius + this->m_player->collision->radius);
+        auto &p = this->m_player->transform->pos;
+        auto &en = e->transform->pos;
+        int dis = (int)((p.x - en.x) * (p.x - en.x) + (p.y - en.y) * (p.y - en.y));
+        if (dis < collision * collision)
+            e->destroy();
+    }
 }
 
 Game::Game()
