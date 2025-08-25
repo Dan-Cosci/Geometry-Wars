@@ -1,0 +1,137 @@
+
+#include "Game.hpp"
+
+void Game::init()
+{
+    this->window.create(sf::VideoMode(1280, 720), "Geometry Wars");
+
+    // initializes player variables
+    this->m_player = this->m_entities.addEntity("player");
+    this->m_player->shape = std::make_shared<c_shape>(
+        50.0f,
+        8,
+        sf::Color::Black,
+        sf::Color::Red,
+        1.4f);
+    this->m_player->transform = std::make_shared<c_transform>(
+        sf::Vector2f(this->window.getSize().x / 2, this->window.getSize().y / 2),
+        sf::Vector2f(5, 5));
+    this->m_player->input = std::make_shared<c_input>();
+    this->m_player->collision = std::make_shared<c_collision>(this->m_player->shape->shape.getRadius());
+}
+
+void Game::polEv()
+{
+    while (this->window.pollEvent(ev))
+    {
+        if (ev.type == sf::Event::Closed)
+        {
+            this->window.close();
+        }
+    }
+}
+
+void Game::s_render()
+{
+    this->window.clear(sf::Color::Black);
+    for (auto &e : this->m_entities.getEntities())
+    {
+        e->shape->shape.setPosition(e->transform->pos);
+        this->window.draw(e->shape->shape);
+    }
+}
+
+void Game::s_enemyspawner()
+{
+}
+
+void Game::s_userinput()
+{
+    if (ev.type == sf::Event::KeyPressed)
+    {
+        if (ev.key.code == sf::Keyboard::W)
+            this->m_player->input->up = true;
+        if (ev.key.code == sf::Keyboard::S)
+            this->m_player->input->down = true;
+        if (ev.key.code == sf::Keyboard::A)
+            this->m_player->input->left = true;
+        if (ev.key.code == sf::Keyboard::D)
+            this->m_player->input->right = true;
+    }
+    else if (ev.type == sf::Event::KeyReleased)
+    {
+        if (ev.key.code == sf::Keyboard::W)
+            this->m_player->input->up = false;
+        if (ev.key.code == sf::Keyboard::S)
+            this->m_player->input->down = false;
+        if (ev.key.code == sf::Keyboard::A)
+            this->m_player->input->left = false;
+        if (ev.key.code == sf::Keyboard::D)
+            this->m_player->input->right = false;
+    }
+
+    // --- MOUSE HANDLING (for shooting) ---
+    if (ev.type == sf::Event::MouseButtonPressed)
+    {
+        if (ev.mouseButton.button == sf::Mouse::Left)
+        {
+            this->m_player->input->shoot = true;
+        }
+    }
+    else if (ev.type == sf::Event::MouseButtonReleased)
+    {
+        if (ev.mouseButton.button == sf::Mouse::Left)
+        {
+            this->m_player->input->shoot = false;
+        }
+    }
+}
+
+void Game::s_update()
+{
+    this->window.display();
+    this->window.setFramerateLimit(60);
+}
+
+void Game::s_lifespan()
+{
+    for (auto &e : this->m_entities.getEntities("player"))
+    {
+        for (auto &e : this->m_entities.getEntities("enemy"))
+        {
+        }
+    }
+}
+
+void Game::s_collision()
+{
+}
+
+Game::Game()
+{
+    init();
+}
+
+Game::~Game()
+{
+}
+
+void Game::Run()
+{
+    while (this->window.isOpen())
+    {
+        // update the ques of the entitymanager
+        this->m_entities.update();
+        polEv();
+
+        // game logic checking
+        s_lifespan();
+        s_collision();
+        s_enemyspawner();
+        s_userinput();
+
+        // rendering and animations
+        s_render();
+        s_update();
+    }
+}
