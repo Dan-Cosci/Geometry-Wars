@@ -29,7 +29,7 @@ void Game::init()
     this->m_player->shape = std::make_shared<c_shape>(
         50.0f,
         10,
-        sf::Color::Black,
+        sf::Color(0, 0, 0),
         sf::Color::Red,
         1.4f);
     this->m_player->transform = std::make_shared<c_transform>(
