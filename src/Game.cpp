@@ -89,11 +89,11 @@ void Game::spawnEnemy()
         sf::Vector2f(5, 5),
         3);
     e->shape = std::make_shared<c_shape>(
-        30,
-        5,
-        sf::Color::Blue,
+        this->m_enemyConfig.SR,
+        randNumber(this->m_enemyConfig.VMIN, this->m_enemyConfig.VMAX),
+        sf::Color(randNumber(0, 255), randNumber(0, 255), randNumber(0, 255)),
         sf::Color::White,
-        randNumber(this->m_enemyConfig.VMIN, this->m_enemyConfig.VMAX));
+        this->m_enemyConfig.OT);
     e->collision = std::make_shared<c_collision>(e->shape->shape.getRadius());
 }
 
