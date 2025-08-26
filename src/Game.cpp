@@ -4,7 +4,7 @@
 void Game::init()
 {
     // reads config file
-    std::ifstream file("src/game.config");
+    std::ifstream file("game.config");
     if (!file.is_open())
     {
         std::cerr << "File not found!\n";
