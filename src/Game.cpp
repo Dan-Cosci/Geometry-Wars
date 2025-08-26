@@ -24,20 +24,8 @@ void Game::init()
 
     this->window.create(sf::VideoMode(this->m_windowConfig.W, this->m_windowConfig.H), "Geometry Wars");
 
-    // initializes player variables
-    this->m_player = this->m_entities.addEntity("player");
-    this->m_player->shape = std::make_shared<c_shape>(
-        this->m_playerConfig.SR,
-        this->m_playerConfig.V,
-        sf::Color(this->m_playerConfig.FR, this->m_playerConfig.FG, this->m_playerConfig.FB),
-        sf::Color(this->m_playerConfig.OR, this->m_playerConfig.OG, this->m_playerConfig.OB),
-        1.4f);
-    this->m_player->transform = std::make_shared<c_transform>(
-        sf::Vector2f(this->window.getSize().x / 2, this->window.getSize().y / 2),
-        sf::Vector2f(5, 5),
-        5.0f);
-    this->m_player->input = std::make_shared<c_input>();
-    this->m_player->collision = std::make_shared<c_collision>(this->m_playerConfig.CR);
+    // initializes player
+    spawnPlayer();
 }
 
 void Game::polEv()
@@ -64,7 +52,7 @@ void Game::m_movement()
         t->pos.x += t->vel.x;
     if (i->left)
         t->pos.x -= t->vel.x;
-    if (i->shoot)
+    if (i->shoot && currentFrame - lastBulletSpawned >= 10)
         spawnBullet(this->m_player, m_mosPos());
 }
 
@@ -85,8 +73,10 @@ void Game::spawnEnemy()
 {
     auto e = this->m_entities.addEntity("enemy");
     e->transform = std::make_shared<c_transform>(
-        sf::Vector2f(randNumber(100, (int)this->window.getSize().x - 100), randNumber(100, (int)this->window.getSize().y - 100)),
-        sf::Vector2f(5, 5),
+        sf::Vector2f(randNumber(100, (int)this->window.getSize().x - 100),
+                     randNumber(100, (int)this->window.getSize().y - 100)),
+        sf::Vector2f(randNumber(this->m_enemyConfig.SMIN, this->m_enemyConfig.SMAX),
+                     randNumber(this->m_enemyConfig.SMIN, this->m_enemyConfig.SMAX)),
         3);
     e->shape = std::make_shared<c_shape>(
         this->m_enemyConfig.SR,
@@ -95,6 +85,23 @@ void Game::spawnEnemy()
         sf::Color(this->m_enemyConfig.OR, this->m_enemyConfig.OG, this->m_enemyConfig.OB),
         this->m_enemyConfig.OT);
     e->collision = std::make_shared<c_collision>(this->m_enemyConfig.CR);
+}
+
+void Game::spawnPlayer()
+{
+    this->m_player = this->m_entities.addEntity("player");
+    this->m_player->shape = std::make_shared<c_shape>(
+        this->m_playerConfig.SR,
+        this->m_playerConfig.V,
+        sf::Color(this->m_playerConfig.FR, this->m_playerConfig.FG, this->m_playerConfig.FB),
+        sf::Color(this->m_playerConfig.OR, this->m_playerConfig.OG, this->m_playerConfig.OB),
+        1.4f);
+    this->m_player->transform = std::make_shared<c_transform>(
+        sf::Vector2f(this->window.getSize().x / 2, this->window.getSize().y / 2),
+        sf::Vector2f(5, 5),
+        5.0f);
+    this->m_player->input = std::make_shared<c_input>();
+    this->m_player->collision = std::make_shared<c_collision>(this->m_playerConfig.CR);
 }
 
 void Game::spawnBullet(std::shared_ptr<Entity> e, const sf::Vector2f &target)
@@ -114,21 +121,22 @@ void Game::spawnBullet(std::shared_ptr<Entity> e, const sf::Vector2f &target)
     sf::Vector2f n_vel((a.x / dis) * this->m_bulletConfig.S, (a.y / dis) * this->m_bulletConfig.S);
     b->transform = std::make_shared<c_transform>(e->transform->pos, n_vel, 0);
     b->collision = std::make_shared<c_collision>(this->m_bulletConfig.CR);
+    lastBulletSpawned = currentFrame;
 }
 
 void Game::spawnParticle(std::shared_ptr<Entity> e)
 {
     EntityVec ex;
-    auto &s = e->shape->shape;
+    auto &s = e->shape;
     auto &t = e->transform;
-    for (size_t i = 0; i < s.getPointCount(); i++)
+    for (size_t i = 0; i < s->shape.getPointCount(); i++)
     {
         auto ep = this->m_entities.addEntity("particle");
-        ep->shape = std::make_shared<c_shape>(s.getRadius() * 0.5,
-                                              s.getPointCount(),
-                                              s.getFillColor(),
-                                              s.getOutlineColor(),
-                                              s.getOutlineThickness());
+        ep->shape = std::make_shared<c_shape>(s->shape.getRadius() * 0.6,
+                                              s->shape.getPointCount(),
+                                              s->baseColor,
+                                              s->outlineColor,
+                                              s->shape.getOutlineThickness());
         ep->lifespan = std::make_shared<c_lifeSpan>(30);
 
         /*
@@ -139,10 +147,10 @@ void Game::spawnParticle(std::shared_ptr<Entity> e)
             converts to point
             then normalizes the speed
         */
-        float step = 2 * M_PI / s.getPointCount();
+        float step = 2 * M_PI / s->shape.getPointCount();
         float angle = i * step + step / 2.0f;
-        float x = t->pos.x + s.getRadius() * std::cos(angle);
-        float y = t->pos.y + s.getRadius() * std::sin(angle);
+        float x = t->pos.x + s->shape.getRadius() * std::cos(angle);
+        float y = t->pos.y + s->shape.getRadius() * std::sin(angle);
         sf::Vector2f target(x, y);
         auto a = target - t->pos;
         float dis = std::sqrt(a.x * a.x + a.y * a.y);
@@ -265,10 +273,13 @@ void Game::s_lifespan()
         auto &l = e->lifespan;
         auto &s = e->shape->shape;
         l->remaining--;
-        auto col = s.getFillColor();
-        col.a = (float)l->remaining / l->total * 255;
-        s.setFillColor(col);
-        s.setOutlineColor(col);
+        auto col_f = s.getFillColor();
+        col_f.a = (float)l->remaining / l->total * 255;
+        s.setFillColor(col_f);
+
+        auto col_o = s.getOutlineColor();
+        col_o.a = (float)l->remaining / l->total * 255;
+        s.setOutlineColor(col_o);
         if (e->lifespan->remaining <= 0)
         {
             e->destroy();
@@ -310,7 +321,11 @@ void Game::s_collision()
         auto &en = e->transform->pos;
         int dis = (int)((p.x - en.x) * (p.x - en.x) + (p.y - en.y) * (p.y - en.y));
         if (dis < collision * collision)
-            e->destroy();
+        {
+            spawnParticle(this->m_player);
+            this->m_player->destroy();
+            spawnPlayer();
+        }
     }
 }
 

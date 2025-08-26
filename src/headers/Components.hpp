@@ -15,11 +15,14 @@ class c_shape
 {
 public:
     sf::CircleShape shape;
+    sf::Color baseColor;
+    sf::Color outlineColor;
     c_shape(float radius,
             int point,
             const sf::Color &fill,
             const sf::Color &outline,
             float thickness)
+        : baseColor(fill), outlineColor(outline)
     {
         auto s = sf::CircleShape(radius);
         s.setFillColor(fill);
