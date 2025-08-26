@@ -27,17 +27,17 @@ void Game::init()
     // initializes player variables
     this->m_player = this->m_entities.addEntity("player");
     this->m_player->shape = std::make_shared<c_shape>(
-        50.0f,
-        10,
-        sf::Color(0, 0, 0),
-        sf::Color::Red,
+        this->m_playerConfig.SR,
+        this->m_playerConfig.V,
+        sf::Color(this->m_playerConfig.FR, this->m_playerConfig.FG, this->m_playerConfig.FB),
+        sf::Color(this->m_playerConfig.OR, this->m_playerConfig.OG, this->m_playerConfig.OB),
         1.4f);
     this->m_player->transform = std::make_shared<c_transform>(
         sf::Vector2f(this->window.getSize().x / 2, this->window.getSize().y / 2),
         sf::Vector2f(5, 5),
         5.0f);
     this->m_player->input = std::make_shared<c_input>();
-    this->m_player->collision = std::make_shared<c_collision>(this->m_player->shape->shape.getRadius());
+    this->m_player->collision = std::make_shared<c_collision>(this->m_playerConfig.CR);
 }
 
 void Game::polEv()
@@ -92,9 +92,9 @@ void Game::spawnEnemy()
         this->m_enemyConfig.SR,
         randNumber(this->m_enemyConfig.VMIN, this->m_enemyConfig.VMAX),
         sf::Color(randNumber(0, 255), randNumber(0, 255), randNumber(0, 255)),
-        sf::Color::White,
+        sf::Color(this->m_enemyConfig.OR, this->m_enemyConfig.OG, this->m_enemyConfig.OB),
         this->m_enemyConfig.OT);
-    e->collision = std::make_shared<c_collision>(e->shape->shape.getRadius());
+    e->collision = std::make_shared<c_collision>(this->m_enemyConfig.CR);
 }
 
 void Game::spawnBullet(std::shared_ptr<Entity> e, const sf::Vector2f &target)
@@ -113,7 +113,43 @@ void Game::spawnBullet(std::shared_ptr<Entity> e, const sf::Vector2f &target)
     float dis = std::sqrt(a.x * a.x + a.y * a.y);
     sf::Vector2f n_vel((a.x / dis) * this->m_bulletConfig.S, (a.y / dis) * this->m_bulletConfig.S);
     b->transform = std::make_shared<c_transform>(e->transform->pos, n_vel, 0);
-    b->collision = std::make_shared<c_collision>(b->shape->shape.getRadius());
+    b->collision = std::make_shared<c_collision>(this->m_bulletConfig.CR);
+}
+
+void Game::spawnParticle(std::shared_ptr<Entity> e)
+{
+    EntityVec ex;
+    auto &s = e->shape->shape;
+    auto &t = e->transform;
+    for (size_t i = 0; i < s.getPointCount(); i++)
+    {
+        auto ep = this->m_entities.addEntity("particle");
+        ep->shape = std::make_shared<c_shape>(s.getRadius() * 0.5,
+                                              s.getPointCount(),
+                                              s.getFillColor(),
+                                              s.getOutlineColor(),
+                                              s.getOutlineThickness());
+        ep->lifespan = std::make_shared<c_lifeSpan>(30);
+
+        /*
+            okay just to be honest
+            I do not know how the fuck does this calculation does it
+            to make it short
+            it gets the angle of each midpoint of the side of the polygon
+            converts to point
+            then normalizes the speed
+        */
+        float step = 2 * M_PI / s.getPointCount();
+        float angle = i * step + step / 2.0f;
+        float x = t->pos.x + s.getRadius() * std::cos(angle);
+        float y = t->pos.y + s.getRadius() * std::sin(angle);
+        sf::Vector2f target(x, y);
+        auto a = target - t->pos;
+        float dis = std::sqrt(a.x * a.x + a.y * a.y);
+        sf::Vector2f n_vel((a.x / dis) * this->m_enemyConfig.SMAX, (a.y / dis) * this->m_enemyConfig.SMAX);
+        ep->transform = std::make_shared<c_transform>(t->pos, n_vel, t->angle);
+        ex.push_back(ep);
+    }
 }
 
 void Game::s_render()
@@ -190,6 +226,16 @@ void Game::s_update()
         s.rotate(t->angle);
     }
 
+    // particle update
+    for (auto &e : this->m_entities.getEntities("particle"))
+    {
+        auto &t = e->transform;
+        auto &s = e->shape->shape;
+        t->pos += t->vel;
+        s.setPosition(t->pos);
+        s.rotate(t->angle);
+    }
+
     // bullet update
     for (auto &e : this->m_entities.getEntities("bullet"))
     {
@@ -253,6 +299,7 @@ void Game::s_collision()
             if (dis < collision * collision)
             {
                 e->destroy();
+                spawnParticle(e);
                 b->destroy();
             }
         }

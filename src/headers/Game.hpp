@@ -1,7 +1,8 @@
 #pragma once
+#define _USE_MATH_DEFINES
+#include <cmath>
 #include <iostream>
 #include <random>
-#include <cmath>
 #include <fstream>
 
 #include <SFML/Audio.hpp>
