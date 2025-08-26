@@ -167,11 +167,11 @@ void Game::spawnSpecial(std::shared_ptr<Entity> e)
     EntityVec ex;
     auto &s = e->shape;
     auto &t = e->transform;
-    for (size_t i = 0; i < s->shape.getPointCount(); i++)
+    for (size_t i = 0; i < 32; i++)
     {
         auto ep = this->m_entities.addEntity("special_bullet");
-        ep->shape = std::make_shared<c_shape>(s->shape.getRadius() * 0.6,
-                                              12,
+        ep->shape = std::make_shared<c_shape>(s->shape.getRadius() * 0.3,
+                                              32,
                                               s->baseColor,
                                               s->outlineColor,
                                               s->shape.getOutlineThickness());
@@ -185,10 +185,10 @@ void Game::spawnSpecial(std::shared_ptr<Entity> e)
             converts to point
             then normalizes the speed
         */
-        float step = 2 * M_PI / s->shape.getPointCount();
+        float step = 2 * M_PI / ep->shape->shape.getPointCount();
         float angle = i * step + step / 2.0f;
-        float x = t->pos.x + s->shape.getRadius() * std::cos(angle);
-        float y = t->pos.y + s->shape.getRadius() * std::sin(angle);
+        float x = t->pos.x + ep->shape->shape.getRadius() * std::cos(angle);
+        float y = t->pos.y + ep->shape->shape.getRadius() * std::sin(angle);
         sf::Vector2f target(x, y);
         auto a = target - t->pos;
         float dis = std::sqrt(a.x * a.x + a.y * a.y);
@@ -196,14 +196,30 @@ void Game::spawnSpecial(std::shared_ptr<Entity> e)
         ep->transform = std::make_shared<c_transform>(t->pos, n_vel, t->angle);
         ep->collision = std::make_shared<c_collision>(s->shape.getRadius() * 0.6);
         ex.push_back(ep);
-        lastEnemySpawned = currentFrame;
+        lastSpecialSpawned = currentFrame;
     }
 }
 
 void Game::s_render()
 {
     this->window.clear(sf::Color::Black);
-    for (auto &e : this->m_entities.getEntities())
+    for (auto &e : this->m_entities.getEntities("particle"))
+    {
+        this->window.draw(e->shape->shape);
+    }
+    for (auto &e : this->m_entities.getEntities("special_bullet"))
+    {
+        this->window.draw(e->shape->shape);
+    }
+    for (auto &e : this->m_entities.getEntities("bullet"))
+    {
+        this->window.draw(e->shape->shape);
+    }
+    for (auto &e : this->m_entities.getEntities("enemy"))
+    {
+        this->window.draw(e->shape->shape);
+    }
+    for (auto &e : this->m_entities.getEntities("player"))
     {
         this->window.draw(e->shape->shape);
     }
