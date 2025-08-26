@@ -66,11 +66,14 @@ private:
     void init();
     void polEv();
     void m_movement();
+    sf::Vector2f m_mosPos();
 
-    // Logics
+    // spawning of entities
     void spawnEnemy();
     void spawnPlayer();
     void spawnBullet(std::shared_ptr<Entity> e, const sf::Vector2f &target);
+    void spawnParticle(std::shared_ptr<Entity> e);
+    void spawnSpecial(std::shared_ptr<Entity> e);
 
     // Systems
     void s_render();

@@ -35,7 +35,7 @@ void Game::init()
     this->m_player->transform = std::make_shared<c_transform>(
         sf::Vector2f(this->window.getSize().x / 2, this->window.getSize().y / 2),
         sf::Vector2f(5, 5),
-        0.0f);
+        5.0f);
     this->m_player->input = std::make_shared<c_input>();
     this->m_player->collision = std::make_shared<c_collision>(this->m_player->shape->shape.getRadius());
 }
@@ -64,6 +64,39 @@ void Game::m_movement()
         t->pos.x += t->vel.x;
     if (i->left)
         t->pos.x -= t->vel.x;
+    if (i->shoot)
+        spawnBullet(this->m_player, m_mosPos());
+}
+
+sf::Vector2f Game::m_mosPos()
+{
+    return (sf::Vector2f)sf::Mouse::getPosition(this->window);
+}
+
+void Game::spawnEnemy()
+{
+    auto e = this->m_entities.addEntity("enemy");
+    e->transform = std::make_shared<c_transform>(sf::Vector2f(200, 200), sf::Vector2f(5, 5), 3);
+    e->shape = std::make_shared<c_shape>(30, 5, sf::Color::Blue, sf::Color::White, 2);
+    e->collision = std::make_shared<c_collision>(e->shape->shape.getRadius());
+}
+
+void Game::spawnBullet(std::shared_ptr<Entity> e, const sf::Vector2f &target)
+{
+    auto b = this->m_entities.addEntity("bullet");
+    b->lifespan = std::make_shared<c_lifeSpan>(this->m_bulletConfig.L);
+    b->shape = std::make_shared<c_shape>(
+        this->m_bulletConfig.SR,
+        this->m_bulletConfig.V,
+        sf::Color(this->m_bulletConfig.FR, this->m_bulletConfig.FG, this->m_bulletConfig.FB),
+        sf::Color(this->m_bulletConfig.FR, this->m_bulletConfig.FG, this->m_bulletConfig.FB),
+        this->m_bulletConfig.OT);
+
+    // angle calculation of the bullet speed
+    auto a = target - e->transform->pos;
+    float dis = std::sqrt(a.x * a.x + a.y * a.y);
+    sf::Vector2f n_vel((a.x / dis) * this->m_bulletConfig.S, (a.y / dis) * this->m_bulletConfig.S);
+    b->transform = std::make_shared<c_transform>(e->transform->pos, n_vel, 0);
 }
 
 void Game::s_render()
@@ -71,21 +104,16 @@ void Game::s_render()
     this->window.clear(sf::Color::Black);
     for (auto &e : this->m_entities.getEntities())
     {
-        e->shape->shape.setPosition(e->transform->pos);
-        e->shape->shape.setRotation(e->transform->angle);
         this->window.draw(e->shape->shape);
     }
+    this->window.display();
 }
 
 void Game::s_enemyspawner()
 {
-    if (currentFrame == 120)
+    if (currentFrame % this->m_enemyConfig.SI == this->m_enemyConfig.SI - 1)
     {
-        currentFrame = 0;
-        auto e = this->m_entities.addEntity("enemy");
-        e->transform = std::make_shared<c_transform>(sf::Vector2f(200, 200), sf::Vector2f(5, 5), 0);
-        e->shape = std::make_shared<c_shape>(30, 5, sf::Color::Blue, sf::Color::White, 2);
-        e->collision = std::make_shared<c_collision>(e->shape->shape.getRadius());
+        spawnEnemy();
     }
 }
 
@@ -133,23 +161,56 @@ void Game::s_userinput()
 
 void Game::s_update()
 {
-    this->window.display();
     this->window.setFramerateLimit(60);
 
-    // player rotation
-
+    // enemy update
     for (auto &e : this->m_entities.getEntities("enemy"))
     {
         auto &t = e->transform;
-        t->pos.x += t->vel.x;
-        t->pos.y += t->vel.y;
+        auto &s = e->shape->shape;
+        t->pos += t->vel;
+        s.setPosition(t->pos);
+        s.rotate(t->angle);
     }
-    this->m_player->transform->angle = (int)(this->m_player->transform->angle + 4) % 360;
+
+    // bullet update
+    for (auto &e : this->m_entities.getEntities("bullet"))
+    {
+        auto &t = e->transform;
+        auto &s = e->shape->shape;
+        t->pos += t->vel;
+        s.setPosition(t->pos);
+    }
+
+    // player update
+    for (auto &p : this->m_entities.getEntities("player"))
+    {
+        auto &t = p->transform;
+        auto &s = p->shape->shape;
+        s.setPosition(t->pos);
+        s.rotate(t->angle);
+    }
     currentFrame++;
 }
 
 void Game::s_lifespan()
 {
+    for (auto &e : this->m_entities.getEntities())
+    {
+        if (!e->lifespan)
+            continue;
+        auto &l = e->lifespan;
+        auto &s = e->shape->shape;
+        l->remaining--;
+        auto col = s.getFillColor();
+        col.a = (float)l->remaining / l->total * 255;
+        s.setFillColor(col);
+        s.setOutlineColor(col);
+        if (e->lifespan->remaining <= 0)
+        {
+            e->destroy();
+        }
+    }
 }
 
 void Game::s_collision()
@@ -200,7 +261,7 @@ void Game::Run()
         m_movement();
 
         // rendering and animations
-        s_render();
         s_update();
+        s_render();
     }
 }

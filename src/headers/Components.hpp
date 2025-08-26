@@ -37,8 +37,8 @@ class c_lifeSpan
 public:
     int remaining = 0;
     int total = 0;
-    c_lifeSpan(int r, int t)
-        : remaining(r), total(t) {}
+    c_lifeSpan(int t)
+        : total(t), remaining(t) {}
 };
 
 class c_input
