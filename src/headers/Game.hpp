@@ -67,6 +67,7 @@ private:
     void polEv();
     void m_movement();
     sf::Vector2f m_mosPos();
+    int randNumber(int min, int max);
 
     // spawning of entities
     void spawnEnemy();

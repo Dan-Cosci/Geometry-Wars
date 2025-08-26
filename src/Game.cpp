@@ -73,11 +73,27 @@ sf::Vector2f Game::m_mosPos()
     return (sf::Vector2f)sf::Mouse::getPosition(this->window);
 }
 
+int Game::randNumber(int min, int max)
+{
+    // I dont know how to explain this quite honestly
+    std::mt19937 rng(std::random_device{}());
+    std::uniform_int_distribution<int> dist(min, max);
+    return dist(rng);
+}
+
 void Game::spawnEnemy()
 {
     auto e = this->m_entities.addEntity("enemy");
-    e->transform = std::make_shared<c_transform>(sf::Vector2f(200, 200), sf::Vector2f(5, 5), 3);
-    e->shape = std::make_shared<c_shape>(30, 5, sf::Color::Blue, sf::Color::White, 2);
+    e->transform = std::make_shared<c_transform>(
+        sf::Vector2f(randNumber(100, (int)this->window.getSize().x - 100), randNumber(100, (int)this->window.getSize().y - 100)),
+        sf::Vector2f(5, 5),
+        3);
+    e->shape = std::make_shared<c_shape>(
+        30,
+        5,
+        sf::Color::Blue,
+        sf::Color::White,
+        randNumber(this->m_enemyConfig.VMIN, this->m_enemyConfig.VMAX));
     e->collision = std::make_shared<c_collision>(e->shape->shape.getRadius());
 }
 
@@ -97,6 +113,7 @@ void Game::spawnBullet(std::shared_ptr<Entity> e, const sf::Vector2f &target)
     float dis = std::sqrt(a.x * a.x + a.y * a.y);
     sf::Vector2f n_vel((a.x / dis) * this->m_bulletConfig.S, (a.y / dis) * this->m_bulletConfig.S);
     b->transform = std::make_shared<c_transform>(e->transform->pos, n_vel, 0);
+    b->collision = std::make_shared<c_collision>(b->shape->shape.getRadius());
 }
 
 void Game::s_render()
@@ -224,6 +241,20 @@ void Game::s_collision()
         if (e->transform->pos.y > this->window.getSize().y || e->transform->pos.y < 0)
         {
             e->transform->vel.y = -e->transform->vel.y;
+        }
+
+        for (auto &b : this->m_entities.getEntities("bullet"))
+        {
+            // check for enemy bullet collision
+            int collision = (int)(e->collision->radius + b->collision->radius);
+            auto &p = b->transform->pos;
+            auto &en = e->transform->pos;
+            int dis = (int)((p.x - en.x) * (p.x - en.x) + (p.y - en.y) * (p.y - en.y));
+            if (dis < collision * collision)
+            {
+                e->destroy();
+                b->destroy();
+            }
         }
 
         // check for player collision
