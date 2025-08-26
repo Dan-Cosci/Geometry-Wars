@@ -56,6 +56,7 @@ private:
     int score = 0;
     int lastEnemySpawned = 0;
     int lastBulletSpawned = 0;
+    int lastSpecialSpawned = 0;
     int currentFrame = 0;
     bool running = true;
     WindowConfig m_windowConfig;

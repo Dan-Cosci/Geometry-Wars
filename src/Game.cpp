@@ -52,8 +52,10 @@ void Game::m_movement()
         t->pos.x += t->vel.x;
     if (i->left)
         t->pos.x -= t->vel.x;
-    if (i->shoot && currentFrame - lastBulletSpawned >= 10)
+    if (i->shoot && currentFrame - this->lastBulletSpawned >= 10)
         spawnBullet(this->m_player, m_mosPos());
+    if (i->special && currentFrame - this->lastSpecialSpawned >= 10)
+        spawnSpecial(this->m_player);
 }
 
 sf::Vector2f Game::m_mosPos()
@@ -160,6 +162,44 @@ void Game::spawnParticle(std::shared_ptr<Entity> e)
     }
 }
 
+void Game::spawnSpecial(std::shared_ptr<Entity> e)
+{
+    EntityVec ex;
+    auto &s = e->shape;
+    auto &t = e->transform;
+    for (size_t i = 0; i < s->shape.getPointCount(); i++)
+    {
+        auto ep = this->m_entities.addEntity("special_bullet");
+        ep->shape = std::make_shared<c_shape>(s->shape.getRadius() * 0.6,
+                                              12,
+                                              s->baseColor,
+                                              s->outlineColor,
+                                              s->shape.getOutlineThickness());
+        ep->lifespan = std::make_shared<c_lifeSpan>(60);
+
+        /*
+            okay just to be honest
+            I do not know how the fuck does this calculation does it
+            to make it short
+            it gets the angle of each midpoint of the side of the polygon
+            converts to point
+            then normalizes the speed
+        */
+        float step = 2 * M_PI / s->shape.getPointCount();
+        float angle = i * step + step / 2.0f;
+        float x = t->pos.x + s->shape.getRadius() * std::cos(angle);
+        float y = t->pos.y + s->shape.getRadius() * std::sin(angle);
+        sf::Vector2f target(x, y);
+        auto a = target - t->pos;
+        float dis = std::sqrt(a.x * a.x + a.y * a.y);
+        sf::Vector2f n_vel((a.x / dis) * this->m_enemyConfig.SMAX, (a.y / dis) * this->m_enemyConfig.SMAX);
+        ep->transform = std::make_shared<c_transform>(t->pos, n_vel, t->angle);
+        ep->collision = std::make_shared<c_collision>(s->shape.getRadius() * 0.6);
+        ex.push_back(ep);
+        lastEnemySpawned = currentFrame;
+    }
+}
+
 void Game::s_render()
 {
     this->window.clear(sf::Color::Black);
@@ -207,16 +247,16 @@ void Game::s_userinput()
     if (ev.type == sf::Event::MouseButtonPressed)
     {
         if (ev.mouseButton.button == sf::Mouse::Left)
-        {
             this->m_player->input->shoot = true;
-        }
+        if (ev.mouseButton.button == sf::Mouse::Right)
+            this->m_player->input->special = true;
     }
     else if (ev.type == sf::Event::MouseButtonReleased)
     {
         if (ev.mouseButton.button == sf::Mouse::Left)
-        {
             this->m_player->input->shoot = false;
-        }
+        if (ev.mouseButton.button == sf::Mouse::Right)
+            this->m_player->input->special = false;
     }
 }
 
@@ -226,6 +266,16 @@ void Game::s_update()
 
     // enemy update
     for (auto &e : this->m_entities.getEntities("enemy"))
+    {
+        auto &t = e->transform;
+        auto &s = e->shape->shape;
+        t->pos += t->vel;
+        s.setPosition(t->pos);
+        s.rotate(t->angle);
+    }
+
+    // special bullter
+    for (auto &e : this->m_entities.getEntities("special_bullet"))
     {
         auto &t = e->transform;
         auto &s = e->shape->shape;
@@ -300,6 +350,7 @@ void Game::s_collision()
             e->transform->vel.y = -e->transform->vel.y;
         }
 
+        // collision with bullet
         for (auto &b : this->m_entities.getEntities("bullet"))
         {
             // check for enemy bullet collision
@@ -312,6 +363,21 @@ void Game::s_collision()
                 e->destroy();
                 spawnParticle(e);
                 b->destroy();
+            }
+        }
+
+        // collision for special
+        for (auto &b : this->m_entities.getEntities("special_bullet"))
+        {
+            // check for enemy bullet collision
+            int collision = (int)(e->collision->radius + b->collision->radius);
+            auto &p = b->transform->pos;
+            auto &en = e->transform->pos;
+            int dis = (int)((p.x - en.x) * (p.x - en.x) + (p.y - en.y) * (p.y - en.y));
+            if (dis < collision * collision)
+            {
+                e->destroy();
+                spawnParticle(e);
             }
         }
 
