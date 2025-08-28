@@ -19,7 +19,9 @@ void Game::init()
     std::cout << "loaded " + r + " config\n";
     file >> r >> this->m_enemyConfig.SR >> this->m_enemyConfig.CR >> this->m_enemyConfig.SMIN >> this->m_enemyConfig.SMAX >> this->m_enemyConfig.OR >> this->m_enemyConfig.OG >> this->m_enemyConfig.OB >> this->m_enemyConfig.OT >> this->m_enemyConfig.VMIN >> this->m_enemyConfig.VMAX >> this->m_enemyConfig.L >> this->m_enemyConfig.SI;
     std::cout << "loaded " + r + " config\n";
-    file >> r >> this->m_bulletConfig.SR >> this->m_bulletConfig.CR >> this->m_bulletConfig.S >> this->m_bulletConfig.FR >> this->m_bulletConfig.FG >> this->m_bulletConfig.FB >> this->m_bulletConfig.OR >> this->m_bulletConfig.OG >> this->m_bulletConfig.OB >> this->m_bulletConfig.OT >> this->m_bulletConfig.V >> this->m_bulletConfig.L;
+    file >> r >> this->m_bulletConfig.SR >> this->m_bulletConfig.CR >> this->m_bulletConfig.S >> this->m_bulletConfig.FR >> this->m_bulletConfig.FG >> this->m_bulletConfig.FB >> this->m_bulletConfig.OR >> this->m_bulletConfig.OG >> this->m_bulletConfig.OB >> this->m_bulletConfig.OT >> this->m_bulletConfig.V >> this->m_bulletConfig.L >> this->m_bulletConfig.C;
+    std::cout << "loaded " + r + " config\n";
+    file >> r >> this->m_spBulletConfig.SR >> this->m_spBulletConfig.CR >> this->m_spBulletConfig.S >> this->m_spBulletConfig.FR >> this->m_spBulletConfig.FG >> this->m_spBulletConfig.FB >> this->m_spBulletConfig.OR >> this->m_spBulletConfig.OG >> this->m_spBulletConfig.OB >> this->m_spBulletConfig.OT >> this->m_spBulletConfig.V >> this->m_spBulletConfig.L >> this->m_spBulletConfig.C >> this->m_spBulletConfig.P;
     std::cout << "loaded " + r + " config\n";
 
     this->window.create(sf::VideoMode(this->m_windowConfig.W, this->m_windowConfig.H), "Geometry Wars");
@@ -52,7 +54,7 @@ void Game::m_movement()
         t->pos.x += t->vel.x;
     if (i->left)
         t->pos.x -= t->vel.x;
-    if (i->shoot && currentFrame - this->lastBulletSpawned >= 10)
+    if (i->shoot && currentFrame - this->lastBulletSpawned >= this->m_bulletConfig.C)
         spawnBullet(this->m_player, m_mosPos());
     if (i->special && currentFrame - this->lastSpecialSpawned >= 10)
         spawnSpecial(this->m_player);
@@ -100,7 +102,7 @@ void Game::spawnPlayer()
         1.4f);
     this->m_player->transform = std::make_shared<c_transform>(
         sf::Vector2f(this->window.getSize().x / 2, this->window.getSize().y / 2),
-        sf::Vector2f(5, 5),
+        sf::Vector2f(this->m_playerConfig.S, this->m_playerConfig.S),
         5.0f);
     this->m_player->input = std::make_shared<c_input>();
     this->m_player->collision = std::make_shared<c_collision>(this->m_playerConfig.CR);
@@ -109,20 +111,21 @@ void Game::spawnPlayer()
 void Game::spawnBullet(std::shared_ptr<Entity> e, const sf::Vector2f &target)
 {
     auto b = this->m_entities.addEntity("bullet");
-    b->lifespan = std::make_shared<c_lifeSpan>(this->m_bulletConfig.L);
+    auto &bc = this->m_bulletConfig;
+    b->lifespan = std::make_shared<c_lifeSpan>(bc.L);
     b->shape = std::make_shared<c_shape>(
-        this->m_bulletConfig.SR,
-        this->m_bulletConfig.V,
-        sf::Color(this->m_bulletConfig.FR, this->m_bulletConfig.FG, this->m_bulletConfig.FB),
-        sf::Color(this->m_bulletConfig.FR, this->m_bulletConfig.FG, this->m_bulletConfig.FB),
-        this->m_bulletConfig.OT);
+        bc.SR,
+        bc.V,
+        sf::Color(bc.FR, bc.FG, bc.FB),
+        sf::Color(bc.OR, bc.OG, bc.OB),
+        bc.OT);
 
     // angle calculation of the bullet speed
     auto a = target - e->transform->pos;
     float dis = std::sqrt(a.x * a.x + a.y * a.y);
-    sf::Vector2f n_vel((a.x / dis) * this->m_bulletConfig.S, (a.y / dis) * this->m_bulletConfig.S);
+    sf::Vector2f n_vel((a.x / dis) * bc.S, (a.y / dis) * bc.S);
     b->transform = std::make_shared<c_transform>(e->transform->pos, n_vel, 0);
-    b->collision = std::make_shared<c_collision>(this->m_bulletConfig.CR);
+    b->collision = std::make_shared<c_collision>(bc.CR);
     lastBulletSpawned = currentFrame;
 }
 
@@ -165,17 +168,17 @@ void Game::spawnParticle(std::shared_ptr<Entity> e)
 void Game::spawnSpecial(std::shared_ptr<Entity> e)
 {
     EntityVec ex;
-    auto &s = e->shape;
+    auto &b = this->m_spBulletConfig;
     auto &t = e->transform;
-    for (size_t i = 0; i < 32; i++)
+    for (size_t i = 0; i < this->m_spBulletConfig.P; i++)
     {
         auto ep = this->m_entities.addEntity("special_bullet");
-        ep->shape = std::make_shared<c_shape>(s->shape.getRadius() * 0.3,
-                                              32,
-                                              s->baseColor,
-                                              s->outlineColor,
-                                              s->shape.getOutlineThickness());
-        ep->lifespan = std::make_shared<c_lifeSpan>(60);
+        ep->shape = std::make_shared<c_shape>(b.SR,
+                                              b.V,
+                                              sf::Color(b.FR, b.FG, b.FB),
+                                              sf::Color(b.OR, b.OG, b.OB),
+                                              b.OT);
+        ep->lifespan = std::make_shared<c_lifeSpan>(b.L);
 
         /*
             okay just to be honest
@@ -194,7 +197,7 @@ void Game::spawnSpecial(std::shared_ptr<Entity> e)
         float dis = std::sqrt(a.x * a.x + a.y * a.y);
         sf::Vector2f n_vel((a.x / dis) * this->m_enemyConfig.SMAX, (a.y / dis) * this->m_enemyConfig.SMAX);
         ep->transform = std::make_shared<c_transform>(t->pos, n_vel, t->angle);
-        ep->collision = std::make_shared<c_collision>(s->shape.getRadius() * 0.6);
+        ep->collision = std::make_shared<c_collision>(b.CR);
         ex.push_back(ep);
         lastSpecialSpawned = currentFrame;
     }

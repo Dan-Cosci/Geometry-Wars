@@ -36,7 +36,12 @@ struct EnemyConfig
 };
 struct BulletConfig
 {
-    int SR, CR, FR, FG, FB, OR, OG, OB, OT, V, L;
+    int SR, CR, FR, FG, FB, OR, OG, OB, OT, V, L, C;
+    float S;
+};
+struct SpBulletConfig
+{
+    int SR, CR, FR, FG, FB, OR, OG, OB, OT, V, L, C, P;
     float S;
 };
 
@@ -64,6 +69,7 @@ private:
     PlayerConfig m_playerConfig;
     EnemyConfig m_enemyConfig;
     BulletConfig m_bulletConfig;
+    SpBulletConfig m_spBulletConfig;
 
     // initial function
     void init();

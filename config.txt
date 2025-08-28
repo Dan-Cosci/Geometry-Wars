@@ -38,3 +38,16 @@ OR, OG, OB      outline color       int,int,int
 OT              outline thickness   int
 V               no. of vertices     int
 L               lifespan            int
+C               cooldown            int
+
+SpecialBullet SR CR S FR FG FB OR OG OB OT V L
+SR              shape radius        int
+CR              collision radius    int
+S               speed               float
+FR, FG, FB      fill color          int,int,int
+OR, OG, OB      outline color       int,int,int
+OT              outline thickness   int
+V               no. of vertices     int
+L               lifespan            int
+C               cooldown            int
+P               points              int
