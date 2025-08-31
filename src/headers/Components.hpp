@@ -70,3 +70,17 @@ public:
     int score = 0;
     c_score(int s) : score(s) {}
 };
+
+class c_health
+{
+public:
+    int total = 0;
+    int remaining = 0;
+    c_health(int x) : total(x), remaining(x) {}
+};
+
+class c_attack
+{
+    int attack = 0;
+    c_attack(int damage) : attack(damage) {}
+};

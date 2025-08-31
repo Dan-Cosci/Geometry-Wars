@@ -24,6 +24,7 @@ public:
     std::shared_ptr<c_input> input;
     std::shared_ptr<c_score> score;
     std::shared_ptr<c_collision> collision;
+    std::shared_ptr<c_health> health;
 
     bool isActive() const { return this->m_active; }
     void destroy() { this->m_active = false; }
