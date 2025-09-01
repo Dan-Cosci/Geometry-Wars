@@ -28,6 +28,9 @@ void Game::init()
 
     // initializes player
     spawnPlayer();
+    if (!this->m_font.loadFromFile(this->m_fontConfig.FS))
+        std::cout << "Font not found\n";
+    spawnText(sf::Vector2f(this->window.getSize().x / this->m_fontOffSet, this->window.getSize().y / this->m_fontOffSet), "Hello");
 }
 
 void Game::polEv()
@@ -203,6 +206,16 @@ void Game::spawnSpecial(std::shared_ptr<Entity> e)
     }
 }
 
+void Game::spawnText(sf::Vector2f loc, std::string text)
+{
+    auto &f = this->m_fontConfig;
+    this->m_text.setFont(this->m_font);
+    this->m_text.setCharacterSize(f.S);
+    this->m_text.setString(text);
+    this->m_text.setFillColor(sf::Color(f.R, f.G, f.B));
+    this->m_text.setPosition(loc);
+}
+
 void Game::s_render()
 {
     this->window.clear(sf::Color::Black);
@@ -226,6 +239,7 @@ void Game::s_render()
     {
         this->window.draw(e->shape->shape);
     }
+    this->window.draw(this->m_text);
     this->window.display();
 }
 

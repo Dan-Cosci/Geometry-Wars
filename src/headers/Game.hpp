@@ -48,22 +48,26 @@ struct SpBulletConfig
 class Game
 {
 private:
-    // init window factors
+    // init window variable
     sf::RenderWindow window;
     sf::Event ev;
     sf::Font m_font;
     sf::Text m_text;
 
-    // game variables
+    // game entities
     std::shared_ptr<Entity> m_player;
     EntityManager m_entities;
 
+    // game variable
     int score = 0;
     int lastEnemySpawned = 0;
     int lastBulletSpawned = 0;
     int lastSpecialSpawned = 0;
     int currentFrame = 0;
+    int m_fontOffSet = 50;
     bool running = true;
+
+    // config data holder
     WindowConfig m_windowConfig;
     FontConfig m_fontConfig;
     PlayerConfig m_playerConfig;
@@ -84,6 +88,7 @@ private:
     void spawnBullet(std::shared_ptr<Entity> e, const sf::Vector2f &target);
     void spawnParticle(std::shared_ptr<Entity> e);
     void spawnSpecial(std::shared_ptr<Entity> e);
+    void spawnText(sf::Vector2f loc, std::string text);
 
     // Systems
     void s_render();
